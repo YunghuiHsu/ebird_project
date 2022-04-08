@@ -4,7 +4,7 @@
 - 透過深度學習演算法提取鳥類深層特徵
 - Extraction of deep features/representation of birds by deep learning algorithms.
 
-### odel 
+### Model 
 #### Masked Autoencoders
 ##### [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
 - [Github](https://github.com/facebookresearch/mae)
