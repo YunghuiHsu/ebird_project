@@ -6,7 +6,7 @@
 
 ### Model 
 #### Masked Autoencoders
-##### [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
+- [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
 - [Github](https://github.com/facebookresearch/mae)
 
 
