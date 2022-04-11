@@ -29,6 +29,15 @@
         - `tar -zxvf file.tar.gz --wildcards "*Aves*"`
     - [UNIX/Linux 檔案壓縮與備份工具 tar 指令使用教學與範例（一）：tar 檔案](https://blog.gtwang.org/linux/tar-command-examples-in-linux-1/)
 
+-(move bigfiles between server)
+  - tar-split, then concat-untar
+    - tar big files and split into small files
+      - `tar -zcvf -  big_demo | split -b 4G -d -a 2 - big_demo.tar.gz_part`
+    - concat small files to original big files and untar it
+      -  `cat big_demo.tar.gz_part* | tar -zxvf - `
+  - [[Linux] tar/gzip 檔案壓縮與解壓縮、split/cat檔案分割與合併的實務應用](https://www.jinnsblog.com/2018/03/linux-tar-and-split-cat-example.html)
+
+
 ---
 ## Convert the json files to easy-to-use csv files
 
