@@ -19,7 +19,6 @@
 - Untaring imgs by (birds) directory
     - filter directory name include "aves", then untar it by keywaord
 
-- Linux tar cmd: 
     - Check how many files contains "Aves"
         - `tar -tvf file.tar.gz |grep Aves`
     - Check how many directory contains "Aves"
