@@ -19,6 +19,18 @@
 - Untaring imgs by (birds) directory
     - filter directory name include "aves", then untar it by keywaord
 
+- Linux tar cmd: 
+    - Check how many files contains "Aves"
+        - `tar -tvf file.tar.gz |grep Aves`
+    - Check how many directory contains "Aves"
+        - `tar -tvf file.tar.gz |grep Aves | grep -vc jpg`
+
+    - untar specific files
+        - `tar -zxvf file.tar.gz --wi
+        ldcards "*Aves*"`
+    - [UNIX/Linux 檔案壓縮與備份工具 tar 指令使用教學與範例（一）：tar 檔案](https://blog.gtwang.org/linux/tar-command-examples-in-linux-1/)
+
+---
 ## Convert the json files to easy-to-use csv files
 
 ### 1. Check data structure in jason files
