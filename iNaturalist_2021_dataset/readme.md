@@ -28,7 +28,7 @@
         - `tar -zxvf file.tar.gz --wildcards "*Aves*"`
     - [UNIX/Linux 檔案壓縮與備份工具 tar 指令使用教學與範例（一）：tar 檔案](https://blog.gtwang.org/linux/tar-command-examples-in-linux-1/)
 
-- if need move bigfiles between server
+- if moving bigfiles between server needed:
   - tar-split, then concat-untar
     - tar big files and split into small files
       - `tar -zcvf -  big_demo | split -b 4G -d -a 2 - big_demo.tar.gz_part`
