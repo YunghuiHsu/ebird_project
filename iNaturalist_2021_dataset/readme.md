@@ -1,4 +1,4 @@
-- process to get and preprocess 'iNaturalist_2021_dataset'
+- Pipeline to get and preprocess 'iNaturalist_2021_dataset'
 
 
 - Data Source
