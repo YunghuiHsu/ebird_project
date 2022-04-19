@@ -1,7 +1,9 @@
 
+### Modify point:
 - Modigy from multi node,gpu to single node/gpu
-- launchingg amp(Automatic Mixed Precision) on pretrain 
-  - modify and launch "grad_clip"
+  - Turn off "distributed computing"  
+- Launching amp(Automatic Mixed Precision) on pretrain 
+  - Turn on "gradient clipping" to prevent gradient vanishing and exploding (i.e. Loss NaN)
 
 ### Model
 #### Masked Autoencoders
