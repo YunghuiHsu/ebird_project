@@ -73,9 +73,11 @@ def get_args_parser():
     parser.set_defaults(global_pool=False)
     parser.add_argument('--cls_token', action='store_false', dest='global_pool',
                         help='Use class token instead of global pool for classification')
+    parser.add_argument('--multi_fc', action='store_true', default='', 
+                        help='Use multi fc layer in linear probing head')
 
     # Dataset parameters
-    parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
+    parser.add_argument('--data_path', default='../ebird/iNaturalist_2021', type=str,
                         help='dataset path')
     parser.add_argument('--nb_classes', default=1000, type=int,
                         help='number of the classification types')
@@ -111,8 +113,6 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
     parser.add_argument('--distributed', action='store_true')
-    parser.add_argument('--amp', action='store_true', default=False)
-    parser.add_argument('--clip_grad', default=None)
 
     return parser
 
@@ -219,12 +219,29 @@ def main(args):
         else:
             assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
 
-        # manually initialize fc layer: following MoCo v3
-        trunc_normal_(model.head.weight, std=0.01)
-
+    
     # for linear prob only
     # hack: revise model's head with BN
-    model.head = torch.nn.Sequential(torch.nn.BatchNorm1d(model.head.in_features, affine=False, eps=1e-6), model.head)
+    if args.multi_fc :
+        # manually initialize fc layer: following MoCo v3
+        fc1 = torch.nn.Linear(model.head.in_features, 1024, bias=False)
+        fc2 = torch.nn.Linear(1024, args.nb_classes, bias=False)
+        for fc_ in [fc1, fc2]:
+            trunc_normal_(fc_.weight, std=0.01)
+            
+        model.head = torch.nn.Sequential(
+            torch.nn.BatchNorm1d(model.head.in_features, affine=False, eps=1e-6), 
+            fc1,
+            torch.nn.LeakyReLU(0.2),
+            fc2,
+            torch.nn.LeakyReLU(0.2),
+            )
+            
+    else:
+        # manually initialize fc layer: following MoCo v3
+        trunc_normal_(model.head.weight, std=0.01)
+        model.head = torch.nn.Sequential(torch.nn.BatchNorm1d(model.head.in_features, affine=False, eps=1e-6), model.head)
+    
     # freeze all but the head
     for _, p in model.named_parameters():
         p.requires_grad = False
