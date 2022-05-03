@@ -10,6 +10,7 @@
 # --------------------------------------------------------
 
 import math
+import time
 import sys
 from typing import Iterable, Optional
 
@@ -30,6 +31,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     model.train(True)
     metric_logger = misc.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    if mixup_fn is not None:
+        metric_logger.add_meter('mixup', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 20
 
@@ -44,13 +48,16 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # we use a per iteration (instead of per epoch) lr scheduler
         if data_iter_step % accum_iter == 0:
-            lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
+            lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch , args)
 
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
         if mixup_fn is not None:
+            start_mixup = time.time()
             samples, targets = mixup_fn(samples, targets)
+            end_mixup = time.time()
+            metric_logger.update(mixup= end_mixup - start_mixup)
 
         with torch.cuda.amp.autocast():
             outputs = model(samples)
