@@ -398,3 +398,28 @@ def load_model_with_D(args, model_without_ddp, discriminator, optimizer, optimiz
             optimizer_G.load_state_dict(checkpoint['optimizer_G'])
             args.start_epoch = checkpoint['epoch'] + 1
             print("With optim G!")
+
+
+def early_stop(valid: float, best_value: float,  trigger_times: int = 0, patience: int = 10, metric: str = 'min', **kwargs) -> int:
+    '''
+    valid:: validation value for loss or accuracy or dice score.
+    best_value:: best value of validation value.
+    metric:: 'min' or 'max'  for minimize(loss), else maxmize(accuracy ,dice score).
+    patience:: if trigger, number of waiting depends on patience.
+    '''
+
+    if metric == 'min':
+        cond = valid > best_value  # minimize(loss)
+    elif metric == 'max':
+        cond = valid < best_value  # maxmize(accuracy ,dice score)
+
+    if cond:
+        trigger_times += 1
+        print('\n\t Early stopping trigger times:', trigger_times)
+    else:
+        trigger_times = 0
+        print('\n\t trigger times reset:', trigger_times)
+
+    # if trigger_times >= patience:
+    #     print('\nTriger Early Stop!')
+    return trigger_times
