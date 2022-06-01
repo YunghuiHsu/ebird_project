@@ -59,3 +59,13 @@
 6. 依目前資料與ebird meta data合併，建立成一份meta data清單
     - 見`get_ebird_meta.ipynb`
 
+7.  參照iNaturalist 2021資料集格式，建立`iNaturalist_2021/val_ebir`資料夾
+    - 處理筆記：見`prepare_val_ebird_as_iNat.ipynb`
+    - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
+    - 探索Embedding時，與iNaturalist 資料比對的eBird驗證資料集
+
+8.  使用eBird資料建立測試資料集
+    - 處理筆記：見`establish_Testing_Dataset.ipynb`
+    - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
+    - Stratified Random Sampling 分層隨機抽樣
+        - 每個物種單元按 6:2:2 切分給train, validation, test
