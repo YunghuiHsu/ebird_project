@@ -29,4 +29,4 @@ Extracting high-level abstract features of bird through deep learning algorithms
 ### Visualization & Exploring
 - Note
   - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
-- code for visualiztion in : visual_mae.ipynb
+- Notebook for visualiztion in : `visual_mae.ipynb`
