@@ -1,7 +1,8 @@
 # ebird_project
 
 ### Project Objective
-透過深度學習演算法萃取出鳥類型態的高階抽象特徵，探討鳥類功能性特徵與環境(緯度、海拔)的關聯性
+透過深度學習演算法萃取出鳥類型態的高階抽象特徵，探討鳥類功能性特徵與環境(緯度、海拔)的關聯性  
+
 Extracting high-level abstract features of bird through deep learning algorithms to explore the correlation between functional traits of birds and environment (latitude, altitude)
 
 ### Model 
