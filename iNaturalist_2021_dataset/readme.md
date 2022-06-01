@@ -13,7 +13,7 @@
   - AI_projects/shared/iNaturalist_2021/
   - `wget ${file link}`
 
-## Untar Aves imgs
+## Untar(filter) bird imgs
 ### check data structure in compressed Directory
 - Untaring the images creates a directory structure like train/category/image.jpg.
 - Untaring imgs by (birds) directory
