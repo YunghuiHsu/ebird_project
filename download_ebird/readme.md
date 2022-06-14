@@ -71,6 +71,13 @@
     - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
     - Stratified Random Sampling 分層隨機抽樣
         - 每個物種單元按 6:2:2 切分給train, validation, test
+    - 資料目錄結構
+    ```
+    --- ebird_testing
+        |___ train/
+        |___ val/
+        |___ test/
+    ```
     - n_class = 9484
     - data_size
 
