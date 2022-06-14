@@ -63,9 +63,19 @@
     - 處理筆記：見`prepare_val_ebird_as_iNat.ipynb`
     - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
     - 探索Embedding時，與iNaturalist 資料比對的eBird驗證資料集
+    - n_class = 1486
+    - data_size = 1486x10 =14,860
 
-8.  使用eBird資料建立測試資料集
+8.  使用eBird資料建立測試資料集`/eBird/download_ebird/downloaded/ebird_testing`
     - 處理筆記：見`establish_Testing_Dataset.ipynb`
     - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
     - Stratified Random Sampling 分層隨機抽樣
         - 每個物種單元按 6:2:2 切分給train, validation, test
+    - n_class = 9484
+    - data_size
+
+        | dir   | data_size | n_class |
+        | ----- |:---------:|:-------:|
+        | train |  517,894  |  9484   |
+        | val   |  172,006  |  9484   |
+        | test  |  173,936  |  9484   |
