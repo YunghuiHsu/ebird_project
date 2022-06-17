@@ -66,14 +66,14 @@
     - n_class = 1486
     - data_size = 1486x10 =14,860
 
-8.  使用eBird資料建立測試資料集`/eBird/download_ebird/downloaded/ebird_testing`
-    - 處理筆記：見`establish_Testing_Dataset.ipynb`
+8.  使用eBird資料建立測試資料集`/eBird/download_ebird/downloaded/ebird_finetune`
+    - 處理筆記：見`establishebird_finetune.ipynb`
     - 來源資料集：`/eBird/download_ebird/downloaded/jpg_top10` 的89萬筆資料
     - Stratified Random Sampling 分層隨機抽樣
         - 每個物種單元按 6:2:2 切分給train, validation, test
     - 資料目錄結構
     ```
-    --- ebird_testing
+    --- ebird_finetune
         |___ train/
         |___ val/
         |___ test/
