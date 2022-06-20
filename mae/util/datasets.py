@@ -12,6 +12,7 @@ import os
 import PIL
 
 from torchvision import datasets, transforms
+import torch.utils.data as data
 
 from timm.data import create_transform
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
@@ -63,3 +64,22 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(mean, std))
     return transforms.Compose(t)
+
+
+class ImageDatasetFromFile(data.Dataset):
+    def __init__(self, image_list,
+                input_height=256, input_width=256, output_height=256, output_width=256, transform=None):
+        
+        super(ImageDatasetFromFile, self).__init__()
+                
+        self.image_filenames = image_list 
+        self.transform = transform         
+        self.toTensor = transforms.Compose([transforms.ToTensor()])
+
+    def __getitem__(self, index):
+        img_ = PIL.Image.open(self.image_filenames[index])
+        img = self.toTensor(img_) if self.transform is None else self.transform(img_) 
+        return img 
+
+    def __len__(self):
+        return len(self.image_filenames)
