@@ -33,6 +33,7 @@ import util.misc as misc
 from util.datasets import build_dataset
 from util.pos_embed import interpolate_pos_embed
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
+from util.misc import early_stop
 
 import models_vit
 
@@ -75,6 +76,9 @@ def get_args_parser():
 
     parser.add_argument('--warmup_epochs', type=int, default=5, metavar='N',
                         help='epochs to warmup LR')
+    # parser.add_argument('--earlystop_metric', '-stop', dest='earlystop',
+    #                 metavar='Earlystop', type=str, default='max',
+    #                 help="Loss fuction goal: maximize Accuracy : 'max' / minimize Valid Loss : 'min'")
 
     # Augmentation parameters
     parser.add_argument('--color_jitter', type=float, default=None, metavar='PCT',
@@ -314,6 +318,8 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
+    patience = 20                # early_stop
+    trigger_times = 0            # early_stop
     max_accuracy = 0.0
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -325,14 +331,23 @@ def main(args):
             log_writer=log_writer,
             args=args
         )
-        if args.output_dir:
-            misc.save_model(
-                args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                loss_scaler=loss_scaler, epoch=epoch)
+        # if args.output_dir:
+        #     misc.save_model(
+        #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+        #         loss_scaler=loss_scaler, epoch=epoch)
 
         test_stats = evaluate(data_loader_val, model, device)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-        max_accuracy = max(max_accuracy, test_stats["acc1"])
+        
+        # get best model depends on valid_loss or val_score
+        if test_stats["acc1"] > max_accuracy:
+            max_accuracy = test_stats["acc1"]
+            misc.save_model(
+                args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+                loss_scaler=loss_scaler, epoch=epoch)
+            print(f"Saved best model with accuracy {max_accuracy:.3f}%")
+        
+        # max_accuracy = max(max_accuracy, test_stats["acc1"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
 
         if log_writer is not None:
@@ -350,6 +365,14 @@ def main(args):
                 log_writer.flush()
             with open(os.path.join(args.output_dir, args.logfile), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+        
+        # --------------------------------------------------------------------------------------------------------------
+        # Early stopping
+        trigger_times = early_stop(
+            test_stats["acc1"], max_accuracy, trigger_times, patience, metric='max')
+        if trigger_times >= patience:
+            print('\nTrigger Early stopping!')
+            break
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
