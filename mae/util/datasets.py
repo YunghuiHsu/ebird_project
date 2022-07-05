@@ -10,7 +10,7 @@
 
 import os
 import PIL
-
+import pandas as pd
 from torchvision import datasets, transforms
 import torch.utils.data as data
 
@@ -21,8 +21,17 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 def build_dataset(is_train, args):
     transform = build_transform(is_train, args)
 
-    root = os.path.join(args.data_path, 'train' if is_train else 'val')
-    dataset = datasets.ImageFolder(root, transform=transform)
+    if args.metafile is not None:
+        dir_ =  'train' if is_train else 'val'
+        df = pd.read_csv(args.metafile, index_col=0)
+        print(f'Load "{args.metafile}". Read Labels')
+        mask = df.Path.str.startswith(dir_)
+        path =  list(args.data_path + '/' + df[mask].Path)
+        label_list = list(df[mask].Label)
+        dataset = ImageDatasetFromFile(path, label_list, transform=transform)
+    else:
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
 
     print(dataset)
 
@@ -67,19 +76,21 @@ def build_transform(is_train, args):
 
 
 class ImageDatasetFromFile(data.Dataset):
-    def __init__(self, image_list,
+    def __init__(self, image_path:list, labels:list,
                 input_height=256, input_width=256, output_height=256, output_width=256, transform=None):
         
         super(ImageDatasetFromFile, self).__init__()
                 
-        self.image_filenames = image_list 
-        self.transform = transform         
+        self.image_path = image_path
+        self.labels = labels
+        self.transform = transform
         self.toTensor = transforms.Compose([transforms.ToTensor()])
 
     def __getitem__(self, index):
-        img_ = PIL.Image.open(self.image_filenames[index])
+        img_ = PIL.Image.open(self.image_path[index]).convert('RGB')
         img = self.toTensor(img_) if self.transform is None else self.transform(img_) 
-        return img 
+        label = self.labels[index]
+        return img, label 
 
     def __len__(self):
         return len(self.image_filenames)
