@@ -132,7 +132,6 @@ def get_args_parser():
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--resume', default='',
                         help='resume from checkpoint')
-
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
                         help='start epoch')
     parser.add_argument('--eval', action='store_true',
@@ -153,6 +152,10 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
     parser.add_argument('--distributed', action='store_true')
+    
+    # label parameters
+    parser.add_argument('--metafile', default=None, type=str,
+                        help='~/AI_projects/shared/eBird/download_ebird/meta/ebird_ft_path_label.csv')
 
     return parser
 
@@ -222,10 +225,12 @@ def main(args):
     mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
     if mixup_active:
         print("Mixup is activated!")
+        device = torch.device('cpu')
         mixup_fn = Mixup(
             mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
             prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
+        device = torch.device(args.device)
     
     model = models_vit.__dict__[args.model](
         num_classes=args.nb_classes,
