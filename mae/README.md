@@ -21,3 +21,9 @@
 - Note
   - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
 - Notebook for visualiztion in : [`mae/visual_mae.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/visual_mae.ipynb)
+
+
+#### Explore the relationship between appearance features and family
+  - `findKeyFeatures.ipynb`
+    - `train_family_classifier.ipynb`
+ 
