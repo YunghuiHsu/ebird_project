@@ -22,8 +22,16 @@
   - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
 - Notebook for visualiztion in : [`mae/visual_mae.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/visual_mae.ipynb)
 
+#### Confirm model focus areas
+- XAI for Transormer
+- Attribute(LPR) x Graidient approach
+  - [CVPR 2021] [Official PyTorch implementation for Transformer Interpretability Beyond Attention Visualization, a novel method to visualize classifications by Transformer based networks.](https://arxiv.org/abs/2012.09838)
 
 #### Explore the relationship between appearance features and family
+- Training simple linear classifier `train_family_classifier.ipynb` 
+  ##### Graidient approach 
   - `findKeyFeatures.ipynb`
-    - `train_family_classifier.ipynb`
+  ##### Attribute(LPR) x Graidient approach 
+  - `findKeyFeatures_Relevance_Grad.ipynb`
+    
  
