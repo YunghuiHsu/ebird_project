@@ -23,7 +23,7 @@
 - Notebook for visualiztion in : [`mae/visual_mae.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/visual_mae.ipynb)
 
 #### Confirm model focus areas
-- XAI for Transormer
+- XAI for Transormer `MAE_explainability.ipynb`
 - Attribute(LPR) x Graidient approach
   - reference : [CVPR 2021] [Official PyTorch implementation for Transformer Interpretability Beyond Attention Visualization, a novel method to visualize classifications by Transformer based networks.](https://arxiv.org/abs/2012.09838)
 
