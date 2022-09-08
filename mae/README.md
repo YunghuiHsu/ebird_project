@@ -25,7 +25,7 @@
 #### Confirm model focus areas
 - XAI for Transormer
 - Attribute(LPR) x Graidient approach
-  - [CVPR 2021] [Official PyTorch implementation for Transformer Interpretability Beyond Attention Visualization, a novel method to visualize classifications by Transformer based networks.](https://arxiv.org/abs/2012.09838)
+  - reference : [CVPR 2021] [Official PyTorch implementation for Transformer Interpretability Beyond Attention Visualization, a novel method to visualize classifications by Transformer based networks.](https://arxiv.org/abs/2012.09838)
 
 #### Explore the relationship between appearance features and family
 - Training simple linear classifier `train_family_classifier.ipynb` 
