@@ -49,7 +49,7 @@ def build_transform(is_train, args):
             is_training=True,
             color_jitter=args.color_jitter,
             auto_augment=args.aa,
-            interpolation='bicubic',
+            interpolation=PIL.Image.BICUBIC,
             re_prob=args.reprob,
             re_mode=args.remode,
             re_count=args.recount,
@@ -76,7 +76,7 @@ def build_transform(is_train, args):
 
 
 class ImageDatasetFromFile(data.Dataset):
-    def __init__(self, image_path:list, labels:list,
+    def __init__(self, image_path:list, labels:list=None,
                 input_height=256, input_width=256, output_height=256, output_width=256, transform=None):
         
         super(ImageDatasetFromFile, self).__init__()
@@ -88,9 +88,12 @@ class ImageDatasetFromFile(data.Dataset):
 
     def __getitem__(self, index):
         img_ = PIL.Image.open(self.image_path[index]).convert('RGB')
-        img = self.toTensor(img_) if self.transform is None else self.transform(img_) 
-        label = self.labels[index]
-        return img, label 
+        img = self.toTensor(img_) if self.transform is None else self.transform(img_)
+        if self.labels is not None:
+            label = self.labels[index]
+            return img, label 
+        else:
+            return img
 
     def __len__(self):
-        return len(self.image_filenames)
+        return len(self.image_path)
