@@ -28,7 +28,7 @@ class MaskedAutoencoderViT(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_chans=3,
                  embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
-                 mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False):
+                 mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False, alpha=0.01, c=50, c_delta=0.01):
         super().__init__()
 
         # --------------------------------------------------------------------------
@@ -43,14 +43,15 @@ class MaskedAutoencoderViT(nn.Module):
             Block(embed_dim, num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
+        self.fc = nn.Linear(embed_dim, 3*embed_dim) # for VSC. 
 
         # --------------------------------------------------------------------------
         # variational sparse coding(vsc) specifics 
         # ref: https://paperswithcode.com/paper/variational-sparse-coding
-        self.alpha = 0.01
-        self.c = 50
-        self.c_delta = 0.01
-
+        self.alpha = alpha     # defaut=0.01
+        self.c = c             # defaut=50
+        self.c_delta = c_delta # defaut=0.01 for epoch=20,000
+        
         # --------------------------------------------------------------------------
         # MAE decoder specifics
         self.decoder_embed = nn.Linear(embed_dim, decoder_embed_dim, bias=True)
@@ -169,11 +170,21 @@ class MaskedAutoencoderViT(nn.Module):
         # append cls token
         cls_token = self.cls_token + self.pos_embed[:, :1, :]
         cls_tokens = cls_token.expand(x.shape[0], -1, -1)
-        x = torch.cat((cls_tokens, x), dim=1)
-            
+        x = torch.cat((cls_tokens, x), dim=1)                   # (batch, 1+ p^2, embed_dim)  
+        
+        # apply Transformer blocks
+        for blk in self.blocks:
+            x = blk(x)
         x = self.norm(x)
 
-        return x, mask, ids_restore
+        # vsc specifics ---------------------------------------
+        # reparameterize for latent vectors
+        x = self.fc(x)                                          # (batch, 1+ p^2, embed_dim) >　(batch, 1 + p^2, ３*embed_dim)
+        mu, logvar, logspike = x.chunk(3, dim=-1)
+        logspike = -F.relu(-logspike)
+        x = self.reparameterize(mu, logvar, logspike)
+        
+        return x, mask, ids_restore, mu, logvar, logspike
 
     def forward_decoder(self, x, ids_restore):
         # embed tokens
@@ -224,18 +235,9 @@ class MaskedAutoencoderViT(nn.Module):
         return loss
 
     def forward(self, imgs, mask_ratio=0.75):
-        latent, mask, ids_restore = self.forward_encoder(imgs, mask_ratio)
-        
-        # vsc specifics ---------------------------------------
-        # reparameterize for latent vectors
-        tokens, patch_embeddings = latent[:, 0, :], latent[:, 1:, :]
-        mu, logvar, logspike = [patch_embeddings]*3
-        logspike = -F.relu(-logspike)
-        patch_embeddings = self.reparameterize(mu, logvar, logspike)
-        latent  = torch.cat((tokens.reshape(latent.shape[0], 1, -1), patch_embeddings), dim=1)
-        
+        # latent, mask, ids_restore = self.forward_encoder(imgs, mask_ratio)
+        latent, mask, ids_restore , mu, logvar, logspike = self.forward_encoder(imgs, mask_ratio)
         loss_prior = self.prior_loss(mu, logvar, logspike)
-        # ----------------------------------------------------
         
         pred = self.forward_decoder(latent, ids_restore)  # [N, L, p*p*3]
         loss_rec = self.forward_loss(imgs, pred, mask)
@@ -255,13 +257,14 @@ class MaskedAutoencoderViT(nn.Module):
     # Reconstruction + KL divergence losses summed over all elements of batch
     def prior_loss(self, mu, logvar, logspike):
         # see Appendix B from VSC paper / Formula 6
-        spike = torch.clamp(logspike.exp(), 1e-6, 1.0 - 1e-6) 
-        prior1 = -0.5 * torch.sum(spike.mul(1 + logvar - mu.pow(2) - logvar.exp()), dim=1)
+        # Calculate each patch, and then calculate the average of the patches and the average of the batches.
+        spike = torch.clamp(logspike.exp(), 1e-6, 1.0 - 1e-6) # (batch, patch_size_unmasked, embed_dim)
+        prior1 = -0.5 * torch.sum(spike.mul(1 + logvar - mu.pow(2) - logvar.exp()), dim=-1)
         prior21 = (1 - spike).mul(torch.log((1 - spike) / (1 - self.alpha)))
         prior22 = spike.mul(torch.log(spike / self.alpha))
-        prior2 = torch.sum(prior21 + prior22, dim=1)
-        prior = prior1 + prior2   # Slab + Spike KL Divergence 
-        loss_prior = prior.mean()
+        prior2 = torch.sum(prior21 + prior22, dim=-1)
+        prior = prior1 + prior2   # Slab + Spike KL Divergence。 shape : (batch, patch) 
+        loss_prior = prior.mean() # Average loss of the batch 
 
         return loss_prior 
     # =========================================================================

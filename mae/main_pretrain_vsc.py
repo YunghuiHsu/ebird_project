@@ -12,6 +12,7 @@ import argparse
 import datetime
 import json
 import numpy as np
+import pandas as pd
 import os
 import time
 from pathlib import Path
@@ -29,6 +30,7 @@ import timm.optim.optim_factory as optim_factory
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
+from util.datasets import ImageDatasetFromFile
 
 import models_mae_vsc
 
@@ -46,13 +48,10 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='mae_vit_large_patch16', type=str, metavar='MODEL',
                         help='Name of model to train')
-
     parser.add_argument('--input_size', default=224, type=int,
                         help='images input size')
-
     parser.add_argument('--mask_ratio', default=0.75, type=float,
                         help='Masking ratio (percentage of removed patches).')
-
     parser.add_argument('--norm_pix_loss', action='store_true',
                         help='Use (per-patch) normalized pixels as targets for computing loss')
     parser.set_defaults(norm_pix_loss=False)
@@ -60,25 +59,24 @@ def get_args_parser():
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.05,
                         help='weight decay (default: 0.05)')
-
     parser.add_argument('--lr', type=float, default=None, metavar='LR',
                         help='learning rate (absolute lr)')
     parser.add_argument('--blr', type=float, default=1e-3, metavar='LR',
                         help='base learning rate: absolute_lr = base_lr * total_batch_size / 256')
     parser.add_argument('--min_lr', type=float, default=0., metavar='LR',
                         help='lower lr bound for cyclic schedulers that hit 0')
-
     parser.add_argument('--warmup_epochs', type=int, default=40, metavar='N',
                         help='epochs to warmup LR')
-
+    
     # Dataset parameters
     parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
                         help='dataset path')
-
     parser.add_argument('--output_dir', default='./output_dir',
                         help='path where to save, empty for no saving')
     parser.add_argument('--log_dir', default='./output_dir',
                         help='path where to tensorboard log')
+    parser.add_argument('--data_files', default="log_mae_vsc.txt", type=str,
+                    help='name of log files')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=0, type=int)
@@ -103,7 +101,14 @@ def get_args_parser():
     parser.add_argument('--distributed', action='store_true')
     parser.add_argument('--amp', action='store_true', default=False)
     parser.add_argument('--clip_grad', default=None)
-
+    
+    # vsc parameters
+    parser.add_argument('--alpha', type=float, default=1e-2, metavar='ALPHA',
+                    help='Sparcity of latent space')
+    parser.add_argument('--weight_rec', type=float, default=10.0,
+                    help='weigth of reconstruction loss')
+    parser.add_argument('--weight_prior', type=float, default=1.0,
+                    help='weigth of prior loss')
     return parser
 
 
@@ -134,7 +139,13 @@ def main(args):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     #dataset_train = datasets.ImageFolder(os.path.join(args.data_path), transform=transform_train)
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
+    if args.data_path.endswith('csv') :
+        df = pd.read_csv(args.data_path)
+        file_paths = [v for (i, v) in df.itertuples()]
+        labels = [Path(path).parent.name for path in file_paths]
+        dataset_train = ImageDatasetFromFile(file_paths, labels=labels, transform=transform_train)
+    else:
+        dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     print(dataset_train)
 
     if args.distributed:
@@ -163,12 +174,12 @@ def main(args):
     )
     
     # define the model
-    model = models_mae_vsc.__dict__[args.model](norm_pix_loss=args.norm_pix_loss)
+    model = models_mae_vsc.__dict__[args.model](norm_pix_loss=args.norm_pix_loss, alpha=args.alpha)
 
     model.to(device)
 
     model_without_ddp = model
-    print("Model = %s" % str(model_without_ddp))
+    # print("Model = %s" % str(model_without_ddp))
 
     eff_batch_size = args.batch_size * args.accum_iter * misc.get_world_size()
     
@@ -196,6 +207,7 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
+        model.c = 50 + epoch * model.c_delta
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
@@ -215,7 +227,7 @@ def main(args):
         if args.output_dir and misc.is_main_process():
             if log_writer is not None:
                 log_writer.flush()
-            with open(os.path.join(args.output_dir, "log_mae_vsc.txt"), mode="a", encoding="utf-8") as f:
+            with open(os.path.join(args.output_dir, args.data_files), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
     total_time = time.time() - start_time
