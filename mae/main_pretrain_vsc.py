@@ -32,20 +32,21 @@ import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from util.datasets import ImageDatasetFromFile
 
+
 import models_mae_vsc
 
 from engine_pretrain_vsc import train_one_epoch
-
+import wandb
 
 def get_args_parser():
-    parser = argparse.ArgumentParser('MAE pre-training', add_help=False)
+    parser = argparse.ArgumentParser('MAE_VSC pre-training', add_help=False)
     parser.add_argument('--batch_size', default=64, type=int,
                         help='Batch size per GPU (effective batch size is batch_size * accum_iter * # gpus')
     parser.add_argument('--epochs', default=400, type=int)
     parser.add_argument('--accum_iter', default=1, type=int,
                         help='Accumulate gradient iterations (for increasing the effective batch size under memory constraints)')
 
-    # Model parameters
+    # Model parameterspip install wandb
     parser.add_argument('--model', default='mae_vit_large_patch16', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--input_size', default=224, type=int,
@@ -131,6 +132,14 @@ def main(args):
     np.random.seed(seed)
 
     cudnn.benchmark = True
+    
+    
+    # --------------Initialize logging------------
+    experiment = wandb.init(
+        project='MAE_VSC_eBird', resume='allow')
+    argparse_log = vars(args)    # save argparse.Namespace into dictionary
+    experiment.config.update(argparse_log)
+    # --------------Initialize logging------------
 
     # simple augmentation
     transform_train = transforms.Compose([
@@ -229,7 +238,28 @@ def main(args):
                 log_writer.flush()
             with open(os.path.join(args.output_dir, args.data_files), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
-
+                
+        # --------------store parameters to wandb histograms-----
+        histograms = {}
+        for tag, value in model.named_parameters():
+            tag = tag.replace('/', '.')
+            histograms['Weights/' +
+                        tag] = wandb.Histogram(value.data.cpu())
+            # histograms['Gradients/' +
+            #             tag] = wandb.Histogram(value.grad.data.cpu())
+        experiment.log({**histograms}, commit=False)
+            # save logs
+                
+        experiment.log({
+            'epoch': epoch,
+            'loss_rec':  train_stats['loss_rec'],
+            'loss_prior': train_stats['loss_prior'],
+            'learning rate_Encoder': optimizer.param_groups[0]['lr'],
+            # 'images': wandb.Image(rec_imgs_train, caption="1st row: Real, 2nd row: Rec, 3nd row: Fake"),
+            # 'Benchmarks': wandb.Image(rec_imgs_valid, caption="Upper row: Real; Lower row: Rec"),
+            # **histograms
+        })
+        
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
