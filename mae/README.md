@@ -6,7 +6,9 @@
   - Turn on "gradient clipping" to prevent gradient vanishing and exploding (i.e. Loss NaN)
 - Add restrictions on the distribution of latent vectors (Sparse Coding)
   - 2022.09
-  - refer : [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
+  - refer : 
+    - [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
+    - [Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) 修改與訓練筆記](https://hackmd.io/@YungHuiHsu/ByIooeufi)
   - `models_mae_vsc.py`, `main_pretrain_vsc.py`, `engine_pretrain_vsc.py`
 
 ### Model
