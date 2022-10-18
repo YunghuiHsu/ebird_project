@@ -67,12 +67,11 @@ def train_one_epoch(model: torch.nn.Module,
         loss_rec /= accum_iter
         loss_prior /= accum_iter
         # loss /= accum_iter
-        # if epoch <= args.warmup_epochs:
-        #     loss_prior = loss_prior * ((epoch + 1e-7) /  args.warmup_epochs)                      # 0.0 --> 1.0 
-
-        # clip loss_prior to less than loss_rec
-        # while loss_rec*args.weight_rec < loss_prior*args.weight_prior:
-        #     loss_prior *= 0.1
+        if epoch <= args.warmup_epochs:
+            loss_prior = loss_prior * ((epoch + 1e-7) /  args.warmup_epochs)                      # 0.0 --> 1.0 
+            # clip loss_prior to less than loss_rec
+            while loss_rec*args.weight_rec < loss_prior*args.weight_prior:
+                loss_prior *= 0.1
             
         loss = loss_rec*args.weight_rec + loss_prior*args.weight_prior
             
