@@ -21,12 +21,14 @@
 - Note
   - Training Note : [Masked Autoencoders(MAE) Model Training Notes](https://hackmd.io/@YungHuiHsu/BJFcW5L49)
   - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)
+- Web 
+  - [Training log on Wandb](https://wandb.ai/yunghui/MAE_VSC_eBird)
 
 
 ### Visualization & Exploring
 - Note
   - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
-- Notebook for visualiztion in : [`mae/visual_mae.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/visual_mae.ipynb)
+- Notebook for visualiztion in : [`mae/embed_explore.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/embed_explore.ipynb)
 
 #### Confirm model focus areas
 - XAI for Transormer `MAE_explainability.ipynb`
