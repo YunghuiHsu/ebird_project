@@ -62,7 +62,7 @@ def get_args_parser():
                         help='weight decay (default: 0.05)')
     parser.add_argument('--lr', type=float, default=None, metavar='LR',
                         help='learning rate (absolute lr)')
-    parser.add_argument('--blr', type=float, default=1e-3, metavar='LR',
+    parser.add_argument('--blr', type=float, default=1.5e-5, metavar='LR',
                         help='base learning rate: absolute_lr = base_lr * total_batch_size / 256')
     parser.add_argument('--min_lr', type=float, default=0., metavar='LR',
                         help='lower lr bound for cyclic schedulers that hit 0')
@@ -106,9 +106,9 @@ def get_args_parser():
     # vsc parameters
     parser.add_argument('--alpha', type=float, default=1e-2, metavar='ALPHA',
                     help='Sparcity of latent space')
-    parser.add_argument('--weight_rec', type=float, default=10.0,
+    parser.add_argument('--weight_rec', type=float, default=1.0,
                     help='weigth of reconstruction loss')
-    parser.add_argument('--weight_prior', type=float, default=1.0,
+    parser.add_argument('--weight_prior', type=float, default=1e-3,
                     help='weigth of prior loss')
     return parser
 
@@ -240,15 +240,16 @@ def main(args):
                 f.write(json.dumps(log_stats) + "\n")
                 
         # --------------store parameters to wandb histograms-----
-        histograms = {}
-        for tag, value in model.named_parameters():
-            tag = tag.replace('/', '.')
-            histograms['Weights/' +
-                        tag] = wandb.Histogram(value.data.cpu())
-            # histograms['Gradients/' +
-            #             tag] = wandb.Histogram(value.grad.data.cpu())
-        experiment.log({**histograms}, commit=False)
-            # save logs
+        if epoch % 1 == 0:
+            histograms = {}
+            for tag, value in model.named_parameters():
+                tag = tag.replace('/', '.')
+                histograms['Weights/' +
+                           tag] = wandb.Histogram(value.data.cpu())
+                # histograms['Gradients/' +
+                #            tag] = wandb.Histogram(value.grad.data.cpu())
+            experiment.log({**histograms}, commit=False)
+                # save logs
                 
         experiment.log({
             'epoch': epoch,
