@@ -9,27 +9,28 @@
 # BEiT: https://github.com/microsoft/unilm/tree/master/beit
 # --------------------------------------------------------
 import math
+from re import T
 import sys
+from pathlib import Path
 from typing import Iterable
 
+import wandb
 import torch
 
 import util.misc as misc
 import util.lr_sched as lr_sched
+from util.misc import log_images
 
 def train_one_epoch(model: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, epoch: int, loss_scaler,
-                    log_writer=None,
-                    args=None):
+                    device: torch.device, epoch: int, loss_scaler, log_writer=None,
+                    val_imgs=None, wandb_logger=None, rec_save_path=None,
+                    args=None, **kwargs):
     model.train(True)
     metric_logger = misc.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    metric_logger.add_meter('w_rec', misc.SmoothedValue(window_size=1, fmt='{value:.1f}'))
+    # metric_logger.add_meter('w_rec', misc.SmoothedValue(window_size=1, fmt='{value:.1f}'))
     metric_logger.add_meter('w_prior', misc.SmoothedValue(window_size=1, fmt='{value:.3f}'))
-    # metric_logger.add_meter('loss_total', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    # metric_logger.add_meter('loss_rec', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    # metric_logger.add_meter('loss_prior', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
 
     header = 'Epoch: [{}]'.format(epoch)
     
@@ -59,6 +60,10 @@ def train_one_epoch(model: torch.nn.Module,
 
         if not math.isfinite(loss_rec.item()):
             print("Loss_rec is {}, stopping training".format(loss_rec.item()))
+            root = args.output_dir/Path(f'LossRecNaN_imgs')
+            root.mkdir(parents=True, exist_ok=True)
+            p_ = f'A{args.alpha}_Wp{str(args.weight_prior)}_Lr{str(args.blr)}'
+            _ = log_images(samples, save_path=root/f'LossRecNaN_{p_}_E{epoch:04d}.jpg', nrow=10)
             sys.exit(1)
         if not math.isfinite(loss_prior.item()):
             print("Loss_prior is {}, stopping training".format(loss_prior.item()))
@@ -70,10 +75,10 @@ def train_one_epoch(model: torch.nn.Module,
         if epoch <= args.warmup_epochs:
             loss_prior = loss_prior * (epoch  /  args.warmup_epochs)                      # 0.0 --> 1.0 
             # clip loss_prior to less than loss_rec
-            while loss_rec*args.weight_rec < loss_prior*args.weight_prior:
+            while loss_rec< loss_prior*args.weight_prior:
                 loss_prior *= 0.1
             
-        loss = loss_rec*args.weight_rec + loss_prior*args.weight_prior
+        loss = loss_rec + loss_prior*args.weight_prior
             
         loss_scaler(loss, optimizer, parameters=model.parameters(), clip_grad=args.clip_grad,
                     update_grad=(data_iter_step + 1) % accum_iter == 0)
@@ -82,12 +87,11 @@ def train_one_epoch(model: torch.nn.Module,
 
         torch.cuda.synchronize()
         
-        metric_logger.update(w_rec=args.weight_rec)
+        # metric_logger.update(w_rec=args.weight_rec)
         metric_logger.update(w_prior=args.weight_prior)
         metric_logger.update(loss_total=loss.item())
-        metric_logger.update(loss_rec=loss_rec.item()*args.weight_rec)
+        metric_logger.update(loss_rec=loss_rec.item())
         metric_logger.update(loss_prior=loss_prior.item()*args.weight_prior)
-
 
         lr = optimizer.param_groups[0]["lr"]
         metric_logger.update(lr=lr)
@@ -101,7 +105,17 @@ def train_one_epoch(model: torch.nn.Module,
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
 
-
+    # Validate Reconstruction Imgs(optional)----------------
+    if (epoch % 5 == 0):
+        # try:
+        model.eval()
+        with torch.no_grad():
+            rec = misc.get_Rec_imgs(val_imgs, model, mask_ratio=0.75)
+        rec_imgs_valid = misc.log_images(real=val_imgs, rec=rec, save_path=rec_save_path)
+        wandb_logger.log({'Benchmarks': wandb.Image(rec_imgs_valid.cpu(), caption="Upper : Real; Lower : Reconstruction")})
+        # except:
+        #     print(f'If you want check Reconstruction imgs, Plz put benchmark imgs in "{rec_save_path.parent}"')
+    
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)

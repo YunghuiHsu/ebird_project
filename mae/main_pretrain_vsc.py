@@ -11,6 +11,7 @@
 import argparse
 import datetime
 import json
+from random import sample
 import numpy as np
 import pandas as pd
 import os
@@ -21,17 +22,16 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 import torchvision.transforms as transforms
+from torchvision.transforms import InterpolationMode
 import torchvision.datasets as datasets
 
 import timm
-
 assert timm.__version__ == "0.3.2"  # version check
 import timm.optim.optim_factory as optim_factory
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from util.datasets import ImageDatasetFromFile
-
 
 import models_mae_vsc
 
@@ -106,9 +106,9 @@ def get_args_parser():
     # vsc parameters
     parser.add_argument('--alpha', type=float, default=1e-2, metavar='ALPHA',
                     help='Sparcity of latent space')
-    parser.add_argument('--weight_rec', type=float, default=1.0,
-                    help='weigth of reconstruction loss')
-    parser.add_argument('--weight_prior', type=float, default=1e-3,
+    # parser.add_argument('--weight_rec', type=float, default=1.0,
+    #                 help='weigth of reconstruction loss')
+    parser.add_argument('--weight_prior', type=float, default=5e-3,
                     help='weigth of prior loss')
     return parser
 
@@ -120,6 +120,11 @@ def main(args):
         args.accum_iter = 21
     
     misc.init_distributed_mode(args)
+    
+    v_model = f'MAE_VSC'
+    v_model += f'(A{args.alpha}_Wp{str(args.weight_prior)}_Lr{str(args.blr)})'
+    v_model += f'_Npl({str(args.norm_pix_loss)[0]})_Amp({str(args.amp)[0]})'
+    print(v_model)
 
     print('job dir: {}'.format(os.path.dirname(os.path.realpath(__file__))))
     print("{}".format(args).replace(', ', ',\n'))
@@ -135,10 +140,10 @@ def main(args):
     
     
     # --------------Initialize logging------------
-    experiment = wandb.init(
+    wandb_logger = wandb.init(
         project='MAE_VSC_eBird', resume='allow')
     argparse_log = vars(args)    # save argparse.Namespace into dictionary
-    experiment.config.update(argparse_log)
+    wandb_logger.config.update(argparse_log)
     # --------------Initialize logging------------
 
     # simple augmentation
@@ -182,6 +187,28 @@ def main(args):
         drop_last=True,
     )
     
+    # Validate Reconstruction Imgs(optional)----------------
+    dir_valid = Path('valid_benchmarks')
+    dir_valid.mkdir(parents=True, exist_ok=True)
+    valid_list = [str(path) for path in dir_valid.glob('*.jpg')]
+    try:
+        assert valid_list != [], f'Check whether {dir_valid} has imgs'
+    except:
+        print(f'If you want check Reconstruction imgs, Plz put benchmark imgs in {dir_valid}')
+    
+    transform_val = transforms.Compose([
+        transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
+        transforms.CenterCrop((224,224)),
+        transforms.ToTensor()])
+    dataset_val = ImageDatasetFromFile(valid_list, transform=transform_val)
+    data_loader_val = torch.utils.data.DataLoader(dataset_val, 
+                                                  batch_size=len(dataset_val), shuffle=False, drop_last=False, pin_memory=True)
+    val_imgs = next(iter(data_loader_val)).to(device)
+    
+    root_rec = args.output_dir/Path('rec_results')
+    root_rec.mkdir(parents=True, exist_ok=True)
+        # ----------------
+    
     # define the model
     model = models_mae_vsc.__dict__[args.model](norm_pix_loss=args.norm_pix_loss, alpha=args.alpha)
 
@@ -216,13 +243,16 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
+        model.train()
         model.c = 50 + epoch * model.c_delta
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
+        rec_save_path = root_rec/f'Rec_{v_model}_E{epoch:04d}.jpg'
         train_stats = train_one_epoch(
             model, data_loader_train,
             optimizer, device, epoch, loss_scaler,
             log_writer=log_writer,
+            val_imgs=val_imgs, wandb_logger=wandb_logger, rec_save_path=rec_save_path,
             args=args
         )
         if args.output_dir and (epoch % 1 == 0 or epoch + 1 == args.epochs):
@@ -238,26 +268,24 @@ def main(args):
                 log_writer.flush()
             with open(os.path.join(args.output_dir, args.data_files), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
-                
-        # --------------store parameters to wandb histograms-----
-        if epoch % 1 == 0:
+               
+
+        # --------------Store parameters to wandb histograms-----
+        if epoch % 10 == 0:
             histograms = {}
             for tag, value in model.named_parameters():
                 tag = tag.replace('/', '.')
-                histograms['Weights/' +
-                           tag] = wandb.Histogram(value.data.cpu())
-                # histograms['Gradients/' +
-                #            tag] = wandb.Histogram(value.grad.data.cpu())
-            experiment.log({**histograms}, commit=False)
+                histograms['Weights/' + tag] = wandb.Histogram(value.data.cpu())
+                # histograms['Gradients/' + tag] = wandb.Histogram(value.grad.data.cpu())
+            wandb_logger.log({**histograms}, commit=False)
                 # save logs
                 
-        experiment.log({
+        wandb_logger.log({
             'epoch': epoch,
             'loss_rec':  train_stats['loss_rec'],
             'loss_prior': train_stats['loss_prior'],
             'learning rate_Encoder': optimizer.param_groups[0]['lr'],
             # 'images': wandb.Image(rec_imgs_train, caption="1st row: Real, 2nd row: Rec, 3nd row: Fake"),
-            # 'Benchmarks': wandb.Image(rec_imgs_valid, caption="Upper row: Real; Lower row: Rec"),
             # **histograms
         })
         

@@ -43,7 +43,7 @@ class MaskedAutoencoderViT(nn.Module):
             Block(embed_dim, num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
-        self.fc = nn.Linear(embed_dim, 3*embed_dim) # for VSC. 
+        self.fc = nn.Linear(embed_dim, 3*embed_dim) # for VSC SPIKE VARIABLE REPARAMETRISATION
 
         # --------------------------------------------------------------------------
         # variational sparse coding(vsc) specifics 
