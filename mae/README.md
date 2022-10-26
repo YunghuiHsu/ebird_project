@@ -1,14 +1,12 @@
 
-### Modify point:
-- Modigy from multi node,gpu to single node/gpu
-  - Turn off "distributed computing"  
-- Launching amp(Automatic Mixed Precision) on pretrain 
-  - Turn on "gradient clipping" to prevent gradient vanishing and exploding (i.e. Loss NaN)
-- Add restrictions on the distribution of latent vectors (Sparse Coding)
-  - 2022.09
-  - refer : 
-    - [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
-    - [Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) 修改與訓練筆記](https://hackmd.io/@YungHuiHsu/ByIooeufi)
+### Ｋey Modify Point:
+- MAE(2022.03)
+  - Modigy from multi node, gpu to single node/gpu
+    - Turn off "distributed computing"  
+  - Launching amp(Automatic Mixed Precision) on pretrain 
+    - Turn on "gradient clipping" to prevent gradient vanishing and exploding (i.e. Loss NaN)
+- MAE_VSC(Masked Autoencoders with Variational Sparse Coding, 2022.09)
+  - Add restrictions on the distribution of latent vectors (Sparse Coding)
   - `models_mae_vsc.py`, `main_pretrain_vsc.py`, `engine_pretrain_vsc.py`
 
 ### Model
@@ -18,10 +16,12 @@
 
 
 ### Training log
-- Note
+- MAE
   - Training Note : [Masked Autoencoders(MAE) Model Training Notes](https://hackmd.io/@YungHuiHsu/BJFcW5L49)
-  - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)
-- Web 
+  - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)\
+- MAE_VSC
+  - Training Note : Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) 修改與訓練筆記](https://hackmd.io/@YungHuiHsu/ByIooeufi)
+  - Paper Note : [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
   - [Training log on Wandb](https://wandb.ai/yunghui/MAE_VSC_eBird)
 
 
