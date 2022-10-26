@@ -9,16 +9,12 @@ Extracting high-level abstract features of bird through deep learning algorithms
 #### Masked Autoencoders
 - [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
 - [Github](https://github.com/facebookresearch/mae)
-- Note
-  - Training Note : [Masked Autoencoders(MAE) Model Training Notes](https://hackmd.io/@YungHuiHsu/BJFcW5L49)
-  - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)
-
 
 ### Dataset:
 - Training dataset:
   - ebird
     - web scrape from [ebird](https://ebird.org)
-    - ranked top 100 from user per species
+    - select top 100 by user ratineg per species
     - total species:  
     - total imgs:
 - Finetune and linprobe dataset:
