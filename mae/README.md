@@ -17,21 +17,27 @@
 
 ### Training log
 - MAE
-  - Training Note : [Masked Autoencoders(MAE) Model Training Notes](https://hackmd.io/@YungHuiHsu/BJFcW5L49)
-  - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)\
+  - MAE修改與訓練筆記
+    - Training Note : [Masked Autoencoders(MAE) Model Training Notes](https://hackmd.io/@YungHuiHsu/BJFcW5L49)
+  - 論文閱讀筆記 
+    - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)\
 - MAE_VSC
-  - Training Note : Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) 修改與訓練筆記](https://hackmd.io/@YungHuiHsu/ByIooeufi)
-  - Paper Note : [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
-  - [Training log on Wandb](https://wandb.ai/yunghui/MAE_VSC_eBird)
+  - MAE_VSC修改與訓練筆記
+    - Training Note : Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) ](https://hackmd.io/@YungHuiHsu/ByIooeufi)
+  - 論文閱讀筆記 
+    - Paper Note : [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
+  - 訓練紀錄(使用Wandb平台) 
+    - [Training log on Wandb](https://wandb.ai/yunghui/MAE_VSC_eBird)
 
 
 ### Visualization & Exploring
 - Note
-  - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
+  - 利用eBird資料探討全球鳥類功能性特徵與型態多樣性(with MAE Model)
+    - [Using Ebird data to explore the functional characteristics and morphological diversity of birds worldwide(with MAE Model)](https://hackmd.io/@YungHuiHsu/Hycb0ScU9)
 - Notebook for visualiztion in : [`mae/embed_explore.ipynb`](https://github.com/YunghuiHsu/ebird_project/blob/main/mae/embed_explore.ipynb)
 
 #### Confirm model focus areas
-- XAI for Transormer `MAE_explainability.ipynb`
+- XAI for Vision Transormer `MAE_explainability.ipynb`
 - Attribute(LPR) x Graidient approach
   - reference : [CVPR 2021] [Official PyTorch implementation for Transformer Interpretability Beyond Attention Visualization, a novel method to visualize classifications by Transformer based networks.](https://arxiv.org/abs/2012.09838)
 
