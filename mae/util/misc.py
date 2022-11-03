@@ -19,7 +19,8 @@ from pathlib import Path
 import torch
 import torch.distributed as dist
 from torch._six import inf
-
+import torchvision.utils as vutils
+from torchvision import transforms
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -400,7 +401,28 @@ def load_model_with_D(args, model_without_ddp, discriminator, optimizer, optimiz
             print("With optim G!")
 
 
-def early_stop(valid: float, best_value: float,  trigger_times: int = 0, patience: int = 10, metric: str = 'min', **kwargs) -> int:
+def get_Rec_imgs(real:torch.tensor, model, mask_ratio=0.75) ->torch.tensor:
+    *loss, y, _ = model(real, mask_ratio=mask_ratio)
+    rec = model.unpatchify(y)
+    rec = rec.detach()
+    return rec
+
+
+def log_images(real: torch.tensor, rec: torch.tensor= None, save_path: str = None, 
+               save: bool = True, nrow: int = 8, resize: int = 128, **kwargs) :
+    if rec == None:
+        images_stack = real
+    else:
+        images_stack = torch.cat([real, rec], dim=0)
+    images_stack = transforms.Resize(resize)(images_stack) if resize else images_stack
+    if save:
+        vutils.save_image(images_stack.data.cpu(), save_path, nrow=nrow)
+    
+    return images_stack
+
+
+def early_stop(valid: float, best_value: float,  trigger_times: int = 0, 
+               patience: int = 10, metric: str = 'min', **kwargs) -> int:
     '''
     valid:: validation value for loss or accuracy or dice score.
     best_value:: best value of validation value.
