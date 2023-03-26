@@ -23,7 +23,7 @@
     - Paper Note : [Masked Autoencoders(MAE) paper reading note](https://hackmd.io/@YungHuiHsu/HJB2yXV75)\
 - MAE_VSC
   - MAE_VSC修改與訓練筆記
-    - Training Note : Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding) ](https://hackmd.io/@YungHuiHsu/ByIooeufi)
+    - [Training Note : Training log of MAE_VSC(Masked Autoencoders with Variational Sparse Coding)](https://hackmd.io/@YungHuiHsu/ByIooeufi)
   - 論文閱讀筆記 
     - Paper Note : [Variational Sparse Coding (VSC)論文筆記](https://hackmd.io/@YungHuiHsu/HJN5IL2gs)
   - 訓練紀錄(使用Wandb平台) 
